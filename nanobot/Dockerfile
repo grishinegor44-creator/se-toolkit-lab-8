@@ -8,8 +8,7 @@ WORKDIR /app/nanobot
 RUN cp -R /workspace/mcp /app/mcp || true
 
 ENV UV_PYTHON=3.14.2
-RUN uv sync --no-dev --frozen || uv sync --no-dev
-
+RUN uv sync --no-dev
 
 FROM python:3.14.2-slim AS runtime
 
