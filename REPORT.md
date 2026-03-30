@@ -69,6 +69,103 @@ Would you like me to:
 
 <!-- Paste the agent's response to "Show me the scores" (without specifying a lab) -->
 
+Here are the detailed scores for all labs:                                                                                                                                                                           
+
+Lab 01 – Products, Architecture & Roles                                                                                                                                                                              
+
+                                                                 
+ Task                                        Avg Score  Attempts 
+ ─────────────────────────────────────────────────────────────── 
+ Lab setup                                   84.3%      3,436    
+ Task 0: Practice the Git workflow           64.5%      306      
+ Task 1: Product & architecture description  55.1%      161      
+ Task 2: Roles and skills mapping            49.8%      83       
+ Optional: Create a release                  60.0%      5        
+ Optional: Resolve a merge conflict          34.6%      13       
+ Optional: Add a CI check                    42.9%      7        
+ Optional: Plan skill development            20.0%      5        
+                                                                 
+
+Lab 02 — Run, Fix, and Deploy a Backend Service                                                                                                                                                                      
+
+                                                                     
+ Task                                            Avg Score  Attempts 
+ ─────────────────────────────────────────────────────────────────── 
+ Task 1: Run the web server                      67.9%      210      
+ Task 2: Identify, report, and fix a bug         66.7%      216      
+ Task 4: Deploy the web server to the VM         56.2%      84       
+ Optional 1: Implement the /outcomes endpoint    36.4%      11       
+ Optional 3: Implement the post-order traversal  62.5%      6        
+ Optional 2: Make your VM a proxy                0.0%       3        
+                                                                     
+
+Lab 03 — Backend API: Explore, Debug, Implement, Deploy                                                                                                                                                              
+
+                                                                         
+ Task                                                Avg Score  Attempts 
+ ─────────────────────────────────────────────────────────────────────── 
+ Task 1: Explore the API                             63.5%      382      
+ Task 2: Enable and debug the interactions endpoint  66.4%      299      
+ Task 4: Deploy to a hardened VM                     43.9%      110      
+ Optional 2: Set up CI with GitHub Actions           44.0%      5        
+ Task 3: Implement the learners endpoint             50.0%      4        
+                                                                         
+
+Lab 04 — Testing, Front-end, and AI Agents                                                                                                                                                                           
+
+                                                                   
+ Task                                          Avg Score  Attempts 
+ ───────────────────────────────────────────────────────────────── 
+ Task 1: Observe System Component Interaction  61.0%      688      
+ Task 2: Back-end Testing                      59.8%      761      
+ Task 3: Add Front-end                         56.3%      8        
+ Optional 1: CI/CD with GitHub Actions         33.8%      17       
+                                                                   
+
+Lab 05 — Data Pipeline and Analytics Dashboard                                                                                                                                                                       
+
+                                                      
+ Task                             Avg Score  Attempts 
+ ──────────────────────────────────────────────────── 
+ Task 1: Build the Data Pipeline  73.5%      629      
+ Task 2: Analytics Endpoints      64.4%      633      
+ Optional 1: Grafana Dashboard    57.2%      60       
+ Task 3: Dashboard Front-end      73.0%      23       
+                                                      
+
+Lab 06 — Build Your Own Agent                                                                                                                                                                                        
+
+                                                      
+ Task                             Avg Score  Attempts 
+ ──────────────────────────────────────────────────── 
+ Task 1: Call an LLM from Code    61.2%      682      
+ Task 2: The Documentation Agent  74.0%      427      
+ Task 3: The System Agent         42.8%      2,064    
+                                                      
+
+Lab 07 — Build a Client with an AI Coding Agent                                                                                                                                                                      
+
+                                                                    
+ Task                                           Avg Score  Attempts 
+ ────────────────────────────────────────────────────────────────── 
+ Task 1: Plan and Scaffold                      76.7%      768      
+ Task 2: Backend Integration                    66.8%      570      
+ Task 3: Intent-Based Natural Language Routing  58.8%      744      
+ Task 4: Containerize and Document              66.6%      706      
+                                                                    
+
+Lab 08                                                                                                                                                                                                               
+
+                                           
+ Task                  Avg Score  Attempts 
+ ───────────────────────────────────────── 
+ (No tasks available)  —          —        
+                                           
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Summary: Lab 02 has the lowest overall average score (~48.3%), largely due to "Optional 2: Make your VM a proxy" with 0.0%. Lab 07 has the highest overall average (~67.2%).
+
 ## Task 2A — Deployed agent
 
 <!-- Paste a short nanobot startup log excerpt showing the gateway started inside Docker -->
