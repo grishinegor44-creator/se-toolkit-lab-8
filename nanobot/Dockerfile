@@ -17,13 +17,15 @@ FROM python:3.14.2-slim AS runtime
 
 WORKDIR /app
 
+COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
+
 COPY --from=builder /app/nanobot /app/nanobot
 COPY --from=builder /app/mcp /app/mcp
 COPY --from=builder /app/nanobot-websocket-channel /app/nanobot-websocket-channel
 
 WORKDIR /app/nanobot
 
-ENV PATH="/app/nanobot/.venv/bin:$PATH"
+ENV PATH="/app/nanobot/.venv/bin:/usr/local/bin:$PATH"
 ENV PYTHONPATH="/app/nanobot"
 
 EXPOSE 18790
