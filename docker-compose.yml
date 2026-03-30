@@ -93,7 +93,7 @@ services:
       - client-web-react:/output
 
   # Task 2A — uncomment and adapt this service after you create repo-local nanobot/.
-    nanobot:
+  nanobot:
     build:
       context: ./nanobot
       additional_contexts:
@@ -104,7 +104,6 @@ services:
     networks:
       - lms-network
     environment:
-      # Task 1 used VM-shell URLs. In Docker, use service-to-service URLs instead.
       - LLM_API_KEY=${LLM_API_KEY:?'LLM_API_KEY is required'}
       - LLM_API_BASE_URL=http://qwen-code-api:${QWEN_CODE_API_CONTAINER_PORT:?'QWEN_CODE_API_CONTAINER_PORT is required'}/v1
       - LLM_API_MODEL=${LLM_API_MODEL:?'LLM_API_MODEL is required'}
@@ -147,7 +146,7 @@ services:
       - CADDY_CONTAINER_PORT=${CADDY_CONTAINER_PORT:?'CADDY_CONTAINER_PORT is required'}
       - BACKEND_CONTAINER_PORT=${BACKEND_CONTAINER_PORT:?'BACKEND_CONTAINER_PORT is required'}
       # Task 2A — uncomment when you proxy /ws/chat to nanobot.
-      # - NANOBOT_WEBCHAT_CONTAINER_PORT=${NANOBOT_WEBCHAT_CONTAINER_PORT:?'NANOBOT_WEBCHAT_CONTAINER_PORT is required'}
+      - NANOBOT_WEBCHAT_CONTAINER_PORT=${NANOBOT_WEBCHAT_CONTAINER_PORT:?'NANOBOT_WEBCHAT_CONTAINER_PORT is required'}
       - QWEN_CODE_API_CONTAINER_PORT=${QWEN_CODE_API_CONTAINER_PORT:?'QWEN_CODE_API_CONTAINER_PORT is required'}
       - CONST_PGADMIN_CONTAINER_PORT=${CONST_PGADMIN_CONTAINER_PORT:?'CONST_PGADMIN_CONTAINER_PORT is required'}
       - CONST_VICTORIALOGS_CONTAINER_PORT=${CONST_VICTORIALOGS_CONTAINER_PORT:?'CONST_VICTORIALOGS_CONTAINER_PORT is required'}
