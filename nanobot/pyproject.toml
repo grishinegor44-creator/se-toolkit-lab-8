@@ -5,9 +5,11 @@ requires-python = ">=3.14"
 dependencies = [
     "nanobot-ai",
     "lms-mcp",
+    "nanobot-channel-protocol",
     "nanobot-webchat",
 ]
 
 [tool.uv.sources]
 lms-mcp = { path = "../mcp", editable = true }
+nanobot-channel-protocol = { path = "../nanobot-websocket-channel/nanobot-channel-protocol", editable = true }
 nanobot-webchat = { path = "../nanobot-websocket-channel/nanobot-webchat", editable = true }
