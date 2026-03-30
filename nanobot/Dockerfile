@@ -10,13 +10,15 @@ RUN cp -R /workspace/mcp /app/mcp || true
 ENV UV_PYTHON=3.14.2
 RUN uv sync --no-dev
 
+
 FROM python:3.14.2-slim AS runtime
 
 WORKDIR /app/nanobot
 
-ENV PATH="/app/nanobot/.venv/bin:${PATH}"
+ENV PATH="/app/nanobot/.venv/bin:/usr/local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
 
-COPY --from=builder /app/nanobot /app/nanobot
+COPY --from=builder /app /app
+COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
 
 CMD ["python", "/app/nanobot/entrypoint.py"]
