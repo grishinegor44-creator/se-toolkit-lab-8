@@ -36,6 +36,35 @@ Would you like me to:
 
 <!-- Paste the agent's response to "What labs are available?" and "Describe the architecture of the LMS system" -->
 
+1. The following labs are available in the LMS:
+    Lab 01 – Products, Architecture & Roles
+    Lab 02 — Run, Fix, and Deploy a Backend Service
+    Lab 03 — Backend API: Explore, Debug, Implement, Deploy
+    Lab 04 — Testing, Front-end, and AI Agents
+    Lab 05 — Data Pipeline and Analytics Dashboard
+    Lab 06 — Build Your Own Agent
+    Lab 07 — Build a Client with an AI Coding Agent
+    lab-08
+
+2. Based on the pass rate data for all labs, here are the average scores per lab:                                                                                                                                       
+
+                        
+   Lab     Average Score  
+   ────────────────────── 
+   lab-01  51.4%          
+   lab-02  48.3%          
+   lab-03  53.6%          
+   lab-04  52.7%          
+   lab-05  67.0%          
+   lab-06  59.3%          
+   lab-07  67.2%          
+   lab-08  N/A (no tasks)                     
+
+   Lab 02 — Run, Fix, and Deploy a Backend Service has the lowest pass rate with an average score of approximately 48.3%.                                                                                               
+
+   Notably, lab-02 includes a task "Optional 2: Make your VM a proxy" with a 0.0% average score, which significantly impacts the overall average. 
+
+
 ## Task 1C — Skill prompt
 
 <!-- Paste the agent's response to "Show me the scores" (without specifying a lab) -->
