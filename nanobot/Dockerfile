@@ -28,4 +28,4 @@ ENV PYTHONPATH="/app/nanobot"
 
 EXPOSE 18790
 
-CMD ["python", "main.py"]
+CMD ["python", "entrypoint.py"]
