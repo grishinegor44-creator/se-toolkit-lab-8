@@ -93,7 +93,7 @@ services:
       - client-web-react:/output
 
   # Task 2A — uncomment and adapt this service after you create repo-local nanobot/.
-  nanobot:
+    nanobot:
     build:
       context: ./nanobot
       additional_contexts:
