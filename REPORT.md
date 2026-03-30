@@ -170,6 +170,10 @@ Summary: Lab 02 has the lowest overall average score (~48.3%), largely due to "O
 
 <!-- Paste a short nanobot startup log excerpt showing the gateway started inside Docker -->
 
+nanobot-1 | 🐈 Starting nanobot gateway version 0.1.4.post6 on port 18790...
+nanobot-1 | MCP server 'lms': connected, 9 tools registered
+nanobot-1 | Agent loop started
+
 ## Task 2B — Web client
 
 <!-- Screenshot of a conversation with the agent in the Flutter web app -->
