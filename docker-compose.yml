@@ -118,7 +118,7 @@ services:
       - backend
       - qwen-code-api
 
-  Task 2B — uncomment after you add nanobot-websocket-channel and want the Flutter build.
+  # Task 2B — uncomment after you add nanobot-websocket-channel and want the Flutter build.
   client-web-flutter:
     build:
       context: ./nanobot-websocket-channel/client-web-flutter
