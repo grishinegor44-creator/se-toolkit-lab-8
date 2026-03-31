@@ -5,7 +5,6 @@ requires-python = ">=3.14"
 dependencies = [
     "nanobot-ai",
     "lms-mcp",
-    "nanobot-webchat",
 ]
 
 [tool.uv.sources]
