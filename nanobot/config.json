@@ -14,9 +14,9 @@
   "channels": {
     "sendProgress": true,
     "sendToolHints": false,
-	"webchat": {
-      "enabled": true,
-      "allow_from": ["*"]
+    "webchat": {
+       "enabled": true,
+       "allow_from": ["*"]
     },
     "dingtalk": {
       "enabled": false,
@@ -164,8 +164,8 @@
       "apiKey": "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",
       "apiBase": "https://openrouter.ai/api/v1",
       "extraHeaders": {
-	"HTTP-Referer": "http://localhost",
-	"X-Title": "nanobot"
+        "HTTP-Referer": "http://localhost",
+        "X-Title": "nanobot"
       }
     },
     "deepseek": {
@@ -278,13 +278,13 @@
     },
     "restrictToWorkspace": false,
     "mcpServers": {
-	"lms": {
-     	 "command": "uv",
-     	 "args": ["run", "python", "-m", "mcp_lms"],
- 	 "env": {
-   	 "NANOBOT_LMS_BACKEND_URL": "http://localhost:42002",
-   	 "NANOBOT_LMS_API_KEY": "eblan"
- 	 }
+        "lms": {
+         "command": "uv",
+         "args": ["run", "python", "-m", "mcp_lms"],
+         "env": {
+         "NANOBOT_LMS_BACKEND_URL": "http://localhost:42002",
+         "NANOBOT_LMS_API_KEY": "eblan"
+         }
       }
     }
   }
