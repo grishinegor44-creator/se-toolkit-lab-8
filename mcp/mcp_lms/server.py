@@ -163,11 +163,17 @@ async def _logs_search(args: _LogsSearchQuery) -> list[TextContent]:
 
 async def _logs_error_count(args: _LogsErrorCountQuery) -> list[TextContent]:
     """Count errors per service over a time window from VictoriaLogs."""
-    # Build query: _stream:{service="<service>"} AND level:error | stats count() by (service)
-    query = f'_stream:{{service="{args.service}"}} AND level:error | stats count() by (service)'
+    # Build query: _stream:{service.name="<service>"} AND severity:ERROR | stats count() by (service.name)
+    # VictoriaLogs time filtering uses the _time field with Unix timestamps or duration strings
+    query = f'_stream:{{service.name="{args.service}"}} AND severity:ERROR'
     url = "http://victorialogs:9428/select/logsql/query"
-    params = {"query": query, "limit": "1000", "time": args.time_range}
+    params = {"query": query, "limit": "1000"}
     
+    # Convert time_range to VictoriaLogs time parameter (e.g., "1h" -> start time)
+    # VictoriaLogs supports duration strings in the time parameter
+    if args.time_range:
+        params["time"] = args.time_range
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as resp:
@@ -175,6 +181,10 @@ async def _logs_error_count(args: _LogsErrorCountQuery) -> list[TextContent]:
                     error_text = await resp.text()
                     return _text({"error": f"VictoriaLogs returned {resp.status}", "details": error_text})
                 data = await resp.json()
+                # Count errors in the result
+                if isinstance(data, list):
+                    error_count = len(data)
+                    return _text({"service": args.service, "time_range": args.time_range, "error_count": error_count, "entries": data})
                 return _text(data)
     except Exception as exc:
         return _text({"error": f"Failed to count errors: {type(exc).__name__}: {exc}"})

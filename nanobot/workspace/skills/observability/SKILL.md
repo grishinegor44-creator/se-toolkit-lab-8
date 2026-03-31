@@ -29,10 +29,15 @@ Do not guess. Use tools first, then answer briefly and clearly.
 
 | Tool | Arguments | When to use |
 |---|---|---|
-| `logs_error_count` | `minutes` (optional), `service` (optional) | When the user asks if there were any recent errors or failures |
-| `logs_search` | `minutes` (optional), `service` (optional), `level` (optional), `query` (optional) | When the user asks what failed, what errors happened, or wants recent incidents |
-| `traces_list` | `minutes` (optional), `service` (optional) | When the user asks about recent requests, slow operations, or traces in a time window |
+| `logs_error_count` | `service` (optional, default "backend"), `time_range` (optional, default "1h") | When the user asks if there were any recent errors or failures |
+| `logs_search` | `query` (required, LogsQL syntax), `limit` (optional, default 100) | When the user asks what failed, what errors happened, or wants recent incidents |
+| `traces_list` | `service` (optional, default "backend"), `limit` (optional, default 20) | When the user asks about recent requests, slow operations, or traces in a time window |
 | `traces_get` | `trace_id` (required) | When the user wants details for a specific trace or when logs include a trace ID |
+
+**LogsQL query examples:**
+- `_stream:{service.name="Learning Management Service"} AND severity:ERROR` — errors from backend
+- `event:db_query` — all database query events
+- `severity:ERROR` — all errors across all services
 
 ---
 
