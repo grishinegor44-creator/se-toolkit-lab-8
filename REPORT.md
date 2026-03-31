@@ -217,6 +217,8 @@ backend-1  | INFO:     172.20.0.9:38226 - "GET /analytics/pass-rates?lab=lab-05 
 
 <!-- Screenshots: healthy trace span hierarchy, error trace -->
 
+![description](/Users/egorg/Desktop/gg.png)
+
 ## Task 3C — Observability MCP tools
 
 <!-- Paste agent responses to "any errors in the last hour?" under normal and failure conditions -->
