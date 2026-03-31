@@ -7,7 +7,9 @@ import json
 import os
 from collections.abc import Awaitable, Callable, Sequence
 from typing import Any
+from urllib.parse import urlencode, quote
 
+import aiohttp
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
@@ -16,7 +18,6 @@ from pydantic import BaseModel, Field
 from mcp_lms.client import LMSClient
 
 _base_url: str = ""
-
 server = Server("lms")
 
 # ---------------------------------------------------------------------------
@@ -36,6 +37,29 @@ class _TopLearnersQuery(_LabQuery):
     limit: int = Field(
         default=5, ge=1, description="Max learners to return (default 5)."
     )
+
+
+class _LogsSearchQuery(BaseModel):
+    query: str = Field(
+        description="LogsQL query string, e.g. '_stream:{service=\"backend\"} AND level:error'"
+    )
+    limit: int = Field(default=100, ge=1, le=1000, description="Max log entries to return")
+
+
+class _LogsErrorCountQuery(BaseModel):
+    service: str = Field(default="backend", description="Service name to filter")
+    time_range: str = Field(
+        default="1h", description="Time range, e.g. '1h', '30m', '2d'"
+    )
+
+
+class _TracesListQuery(BaseModel):
+    service: str = Field(default="backend", description="Service name")
+    limit: int = Field(default=20, ge=1, le=100, description="Max traces to return")
+
+
+class _TracesGetQuery(BaseModel):
+    trace_id: str = Field(description="Trace ID to fetch")
 
 
 # ---------------------------------------------------------------------------
@@ -61,12 +85,14 @@ def _client() -> LMSClient:
     return LMSClient(_base_url, _resolve_api_key())
 
 
-def _text(data: BaseModel | Sequence[BaseModel]) -> list[TextContent]:
-    """Serialize a pydantic model (or list of models) to a JSON text block."""
+def _text(data: BaseModel | Sequence[BaseModel] | dict | list) -> list[TextContent]:
+    """Serialize a pydantic model (or list of models) or dict/list to a JSON text block."""
     if isinstance(data, BaseModel):
         payload = data.model_dump()
-    else:
+    elif isinstance(data, (list, tuple)) and data and isinstance(data[0], BaseModel):
         payload = [item.model_dump() for item in data]
+    else:
+        payload = data
     return [TextContent(type="text", text=json.dumps(payload, ensure_ascii=False))]
 
 
@@ -113,11 +139,87 @@ async def _sync_pipeline(_args: _NoArgs) -> list[TextContent]:
 
 
 # ---------------------------------------------------------------------------
+# Observability tool handlers (VictoriaLogs + VictoriaTraces)
+# ---------------------------------------------------------------------------
+
+
+async def _logs_search(args: _LogsSearchQuery) -> list[TextContent]:
+    """Search VictoriaLogs for log entries matching the query."""
+    # VictoriaLogs HTTP API endpoint: GET /select/logsql/query
+    url = "http://victorialogs:9428/select/logsql/query"
+    params = {"query": args.query, "limit": str(args.limit)}
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    return _text({"error": f"VictoriaLogs returned {resp.status}", "details": error_text})
+                data = await resp.json()
+                return _text(data)
+    except Exception as exc:
+        return _text({"error": f"Failed to query VictoriaLogs: {type(exc).__name__}: {exc}"})
+
+
+async def _logs_error_count(args: _LogsErrorCountQuery) -> list[TextContent]:
+    """Count errors per service over a time window from VictoriaLogs."""
+    # Build query: _stream:{service="<service>"} AND level:error | stats count() by (service)
+    query = f'_stream:{{service="{args.service}"}} AND level:error | stats count() by (service)'
+    url = "http://victorialogs:9428/select/logsql/query"
+    params = {"query": query, "limit": "1000", "time": args.time_range}
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    return _text({"error": f"VictoriaLogs returned {resp.status}", "details": error_text})
+                data = await resp.json()
+                return _text(data)
+    except Exception as exc:
+        return _text({"error": f"Failed to count errors: {type(exc).__name__}: {exc}"})
+
+
+async def _traces_list(args: _TracesListQuery) -> list[TextContent]:
+    """List recent traces from VictoriaTraces (Jaeger API)."""
+    # VictoriaTraces Jaeger API: GET /jaeger/api/traces?service=<service>&limit=<limit>
+    url = "http://victoriatraces:10428/jaeger/api/traces"
+    params = {"service": args.service, "limit": str(args.limit)}
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    return _text({"error": f"VictoriaTraces returned {resp.status}", "details": error_text})
+                data = await resp.json()
+                return _text(data)
+    except Exception as exc:
+        return _text({"error": f"Failed to list traces: {type(exc).__name__}: {exc}"})
+
+
+async def _traces_get(args: _TracesGetQuery) -> list[TextContent]:
+    """Fetch a specific trace by ID from VictoriaTraces."""
+    # VictoriaTraces Jaeger API: GET /jaeger/api/traces/<trace_id>
+    url = f"http://victoriatraces:10428/jaeger/api/traces/{args.trace_id}"
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    return _text({"error": f"VictoriaTraces returned {resp.status}", "details": error_text})
+                data = await resp.json()
+                return _text(data)
+    except Exception as exc:
+        return _text({"error": f"Failed to get trace: {type(exc).__name__}: {exc}"})
+
+
+# ---------------------------------------------------------------------------
 # Registry: tool name -> (input model, handler, Tool definition)
 # ---------------------------------------------------------------------------
 
 _Registry = tuple[type[BaseModel], Callable[..., Awaitable[list[TextContent]]], Tool]
-
 _TOOLS: dict[str, _Registry] = {}
 
 
@@ -185,6 +287,31 @@ _register(
     _sync_pipeline,
 )
 
+# Observability tools
+_register(
+    "logs_search",
+    "Search VictoriaLogs for log entries using LogsQL query syntax.",
+    _LogsSearchQuery,
+    _logs_search,
+)
+_register(
+    "logs_error_count",
+    "Count errors per service over a time window from VictoriaLogs.",
+    _LogsErrorCountQuery,
+    _logs_error_count,
+)
+_register(
+    "traces_list",
+    "List recent traces from VictoriaTraces for a given service.",
+    _TracesListQuery,
+    _traces_list,
+)
+_register(
+    "traces_get",
+    "Fetch a specific trace by ID from VictoriaTraces.",
+    _TracesGetQuery,
+    _traces_get,
+)
 
 # ---------------------------------------------------------------------------
 # MCP handlers
@@ -201,7 +328,6 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
     entry = _TOOLS.get(name)
     if entry is None:
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
-
     model_cls, handler, _ = entry
     try:
         args = model_cls.model_validate(arguments or {})
