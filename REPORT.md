@@ -182,6 +182,37 @@ nanobot-1 | Agent loop started
 
 <!-- Paste happy-path and error-path log excerpts, VictoriaLogs query screenshot -->
 
+backend-1  | INFO:     172.20.0.9:38236 - "GET /analytics/pass-rates?lab=lab-07 HTTP/1.1" 200 OK
+backend-1  | 2026-03-30 18:04:28,153 INFO [app.main] [main.py:68] [trace_id=29cd8af9c567db40c246843ca280e15e span_id=753e0f7abb5822f6 resource.service.name=Learning Management Service trace_sampled=True] - request_completed
+backend-1  | INFO:     172.20.0.9:38248 - "GET /analytics/timeline?lab=lab-07 HTTP/1.1" 200 OK
+backend-1  | INFO:     172.20.0.9:38248 - "GET /analytics/timeline?lab=lab-07 HTTP/1.1" 200
+backend-1  | 2026-03-30 18:04:28,154 INFO [app.main] [main.py:68] [trace_id=37684fd2267140a50457d09a0f12726e span_id=40690033eab228a0 resource.service.name=Learning Management Service trace_sampled=True] - request_completed
+backend-1  | INFO:     172.20.0.9:38226 - "GET /analytics/scores?lab=lab-07 HTTP/1.1" 200 OK
+backend-1  | INFO:     172.20.0.9:38226 - "GET /analytics/scores?lab=lab-07 HTTP/1.1" 200
+backend-1  | 2026-03-30 18:04:28,238 INFO [app.main] [main.py:68] [trace_id=6fef84fdc73e95bcf00b5a0e3f3b3d44 span_id=d8745dd0f5fc0b46 resource.service.name=Learning Management Service trace_sampled=True] - request_completed
+backend-1  | INFO:     172.20.0.9:38254 - "GET /analytics/groups?lab=lab-07 HTTP/1.1" 200 OK
+backend-1  | INFO:     172.20.0.9:38254 - "GET /analytics/groups?lab=lab-07 HTTP/1.1" 200
+backend-1  | 2026-03-30 18:04:30,757 INFO [app.main] [main.py:60] [trace_id=c17e0ca56ee47b2e0bef65910959b64b span_id=247113a4cdff0f8a resource.service.name=Learning Management Service trace_sampled=True] - request_started
+backend-1  | 2026-03-30 18:04:30,772 INFO [app.main] [main.py:60] [trace_id=e2b9d18ebbbaf3d800ad7c71c3f495f2 span_id=972b68da415e20e1 resource.service.name=Learning Management Service trace_sampled=True] - request_started
+backend-1  | 2026-03-30 18:04:30,773 INFO [app.main] [main.py:60] [trace_id=1c04923265b4abccb0fb20043c56c1b2 span_id=f68cc8f77d5c8fe9 resource.service.name=Learning Management Service trace_sampled=True] - request_started
+backend-1  | 2026-03-30 18:04:30,774 INFO [app.main] [main.py:60] [trace_id=1525926b7affb3e371536b22237bc28f span_id=db744edcd81aa336 resource.service.name=Learning Management Service trace_sampled=True] - request_started
+backend-1  | 2026-03-30 18:04:30,778 INFO [app.auth] [auth.py:30] [trace_id=c17e0ca56ee47b2e0bef65910959b64b span_id=247113a4cdff0f8a resource.service.name=Learning Management Service trace_sampled=True] - auth_success
+backend-1  | 2026-03-30 18:04:30,779 INFO [app.auth] [auth.py:30] [trace_id=e2b9d18ebbbaf3d800ad7c71c3f495f2 span_id=972b68da415e20e1 resource.service.name=Learning Management Service trace_sampled=True] - auth_success
+backend-1  | 2026-03-30 18:04:30,779 INFO [app.auth] [auth.py:30] [trace_id=1525926b7affb3e371536b22237bc28f span_id=db744edcd81aa336 resource.service.name=Learning Management Service trace_sampled=True] - auth_success
+backend-1  | 2026-03-30 18:04:30,779 INFO [app.auth] [auth.py:30] [trace_id=1c04923265b4abccb0fb20043c56c1b2 span_id=f68cc8f77d5c8fe9 resource.service.name=Learning Management Service trace_sampled=True] - auth_success
+backend-1  | 2026-03-30 18:04:30,793 INFO [app.main] [main.py:68] [trace_id=c17e0ca56ee47b2e0bef65910959b64b span_id=247113a4cdff0f8a resource.service.name=Learning Management Service trace_sampled=True] - request_completed
+backend-1  | INFO:     172.20.0.9:38254 - "GET /analytics/timeline?lab=lab-05 HTTP/1.1" 200 OK
+backend-1  | INFO:     172.20.0.9:38254 - "GET /analytics/timeline?lab=lab-05 HTTP/1.1" 200
+backend-1  | 2026-03-30 18:04:30,811 INFO [app.main] [main.py:68] [trace_id=1c04923265b4abccb0fb20043c56c1b2 span_id=f68cc8f77d5c8fe9 resource.service.name=Learning Management Service trace_sampled=True] - request_completed
+backend-1  | INFO:     172.20.0.9:38248 - "GET /analytics/scores?lab=lab-05 HTTP/1.1" 200 OK
+backend-1  | INFO:     172.20.0.9:38248 - "GET /analytics/scores?lab=lab-05 HTTP/1.1" 200
+backend-1  | 2026-03-30 18:04:30,819 INFO [app.main] [main.py:68] [trace_id=1525926b7affb3e371536b22237bc28f span_id=db744edcd81aa336 resource.service.name=Learning Management Service trace_sampled=True] - request_completed
+backend-1  | INFO:     172.20.0.9:38236 - "GET /analytics/groups?lab=lab-05 HTTP/1.1" 200 OK
+backend-1  | INFO:     172.20.0.9:38236 - "GET /analytics/groups?lab=lab-05 HTTP/1.1" 200
+backend-1  | 2026-03-30 18:04:30,821 INFO [app.main] [main.py:68] [trace_id=e2b9d18ebbbaf3d800ad7c71c3f495f2 span_id=972b68da415e20e1 resource.service.name=Learning Management Service trace_sampled=True] - request_completed
+backend-1  | INFO:     172.20.0.9:38226 - "GET /analytics/pass-rates?lab=lab-05 HTTP/1.1" 200
+backend-1  | INFO:     172.20.0.9:38226 - "GET /analytics/pass-rates?lab=lab-05 HTTP/1.1" 200 OK
+
 ## Task 3B — Traces
 
 <!-- Screenshots: healthy trace span hierarchy, error trace -->
