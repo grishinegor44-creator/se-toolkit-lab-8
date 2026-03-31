@@ -178,9 +178,13 @@ nanobot-1 | Agent loop started
 
 <!-- Screenshot of a conversation with the agent in the Flutter web app -->
 
+![description](plug.jpg)
+
 ## Task 3A — Structured logging
 
 <!-- Paste happy-path and error-path log excerpts, VictoriaLogs query screenshot -->
+
+![description](plug.jpg)
 
 backend-1  | INFO:     172.20.0.9:38236 - "GET /analytics/pass-rates?lab=lab-07 HTTP/1.1" 200 OK
 backend-1  | 2026-03-30 18:04:28,153 INFO [app.main] [main.py:68] [trace_id=29cd8af9c567db40c246843ca280e15e span_id=753e0f7abb5822f6 resource.service.name=Learning Management Service trace_sampled=True] - request_completed
@@ -216,6 +220,9 @@ backend-1  | INFO:     172.20.0.9:38226 - "GET /analytics/pass-rates?lab=lab-05 
 ## Task 3B — Traces
 
 <!-- Screenshots: healthy trace span hierarchy, error trace -->
+![description](plug.jpg)
+
+![description](plug.jpg)
 
 VictoriaTraces UI (http://localhost:16686) showed the following trace for
 a `GET /analytics/pass-rates?lab=lab-07` request:
