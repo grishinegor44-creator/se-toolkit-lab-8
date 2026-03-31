@@ -8,13 +8,5 @@ dependencies = [
     "nanobot-webchat",
 ]
 
-[tool.uv.workspace]
-members = [
-    "nanobot-channel-protocol",
-    "nanobot-webchat",
-]
-
 [tool.uv.sources]
-lms-mcp = { path = "../mcp", editable = true }
-nanobot-channel-protocol = { workspace = true }
-nanobot-webchat = { workspace = true }
+lms-mcp = { workspace = true }
