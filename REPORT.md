@@ -225,6 +225,13 @@ backend-1  | INFO:     172.20.0.9:38226 - "GET /analytics/pass-rates?lab=lab-05 
 
 ## Task 4A — Multi-step investigation
 
+<!--
+Add MCP observability tools testing evidence below:
+1. Agent response to "Any errors in the last hour?" under normal conditions
+2. Agent response to the same question after stopping PostgreSQL (showing real errors)
+3. Include screenshots or console output showing the agent querying logs and traces
+-->
+
 <!-- Paste the agent's response to "What went wrong?" showing chained log + trace investigation -->
 
 ## Task 4B — Proactive health check
