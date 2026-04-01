@@ -340,57 +340,244 @@ The agent successfully called `logs_error_count` and `logs_search` tools and rep
 3. Ask the agent: "Any errors in the last hour?"
 4. The agent should report the database connection errors
 
-**Expected agent response under failure conditions:**
+**Actual agent response from nanobot logs (2026-03-31 13:00:44):**
 
-> Yes, I found errors in the last hour:
+After stopping PostgreSQL and triggering an error request, the agent was asked "Any errors in the last hour? Check the logs."
+
+From `docker compose logs nanobot --tail 50`:
+```
+nanobot-1  | 2026-03-31 13:00:20.539 | INFO     | nanobot.agent.loop:_prepare_tools:253 - Tool call: mcp_lms_logs_error_count({"time_range": "1h"})
+nanobot-1  | 2026-03-31 13:00:27.693 | INFO     | nanobot.agent.loop:_prepare_tools:253 - Tool call: mcp_lms_logs_search({"query": "_stream:{service=\"backend\"} AND level:error", "limit": 50})
+nanobot-1  | 2026-03-31 13:00:30.362 | INFO     | nanobot.agent.loop:_prepare_tools:253 - Tool call: mcp_lms_logs_search({"query": "level:error", "limit": 50})
+nanobot-1  | 2026-03-31 13:00:34.787 | INFO     | nanobot.agent.loop:_prepare_tools:253 - Tool call: mcp_lms_traces_list({"service": "backend", "limit": 20})
+nanobot-1  | 2026-03-31 13:00:37.229 | INFO     | nanobot.agent.loop:_prepare_tools:253 - Tool call: mcp_lms_lms_health({})
+nanobot-1  | 2026-03-31 13:00:44.961 | INFO     | nanobot.agent.loop:_process_message:479 - Response to webchat:2783aafd-8363-4e15-95f7-c332b067a03c: ## Error Summary
+
+nanobot-1  | 
+nanobot-1  | **Good news:** No application-level errors found in the logs for the last hour.
+nanobot-1  | 
+nanobot-1  | **However, there's a ...
+```
+
+**Agent response summary:**
+> ## Error Summary
 >
-> - **Service**: Learning Management Service
-> - **Error**: `sqlalchemy.exc.InterfaceError: connection is closed`
-> - **Location**: `app.db.items` — database query failed
-> - **Trace ID**: `d089342a8391238e412bccd45b180e22`
-> - **Time**: 2026-03-31 13:03:57
-> - **Root cause**: PostgreSQL connection refused
+> **Good news:** No application-level errors found in the logs for the last hour.
 >
-> The database connection pool was closed, causing all queries to fail with HTTP 404 responses.
+> **However, there's a system health issue:** The LMS backend health check returned unhealthy status.
+
+Note: The agent detected the backend was unhealthy but didn't find the specific database errors in VictoriaLogs because the error logs from the stopped PostgreSQL test were returned as HTTP 404 (not ERROR level) by the backend's exception handler.
+
+### Tools used by the agent
+
+The agent successfully called these observability tools:
+1. `mcp_lms_logs_error_count({"time_range": "1h"})` — count errors in last hour
+2. `mcp_lms_logs_search({"query": "_stream:{service=\"backend\"} AND level:error", "limit": 50})` — search backend errors
+3. `mcp_lms_logs_search({"query": "level:error", "limit": 50})` — search all service errors
+4. `mcp_lms_traces_list({"service": "backend", "limit": 20})` — list recent traces
+5. `mcp_lms_lms_health({})` — check LMS health status
 
 ### Recovery
 
-Restart PostgreSQL: `docker compose start postgres`
-
-**Instructions for student:**
-1. Open your Flutter web app or connect to the nanobot WebSocket
-2. Ask: "Any errors in the last hour?" under normal conditions
-3. Stop PostgreSQL, trigger a request, then ask again
-4. Paste both agent responses below with timestamps
-
-**Agent response (normal conditions):**
-```
-[Paste the actual agent response here]
-```
-
-**Agent response (after stopping PostgreSQL):**
-```
-[Paste the actual agent response here]
-```
+PostgreSQL was restarted: `docker compose start postgres`
 
 ## Task 4A — Multi-step investigation
 
-<!--
-Add MCP observability tools testing evidence below:
-1. Agent response to "Any errors in the last hour?" under normal conditions
-2. Agent response to the same question after stopping PostgreSQL (showing real errors)
-3. Include screenshots or console output showing the agent querying logs and traces
--->
+### Agent response to "What went wrong?" (with PostgreSQL stopped)
 
-<!-- Paste the agent's response to "What went wrong?" showing chained log + trace investigation -->
+The agent successfully performed a multi-step investigation using logs and traces:
+
+```
+## Issue Found: Database Connection Failure
+
+**Root Cause:** DNS resolution failure - the backend cannot connect to the PostgreSQL database.
+
+**Error:** `socket.gaierror: [Errno -2] Name or service not known`
+
+**Details:**
+- **When:** Most recent at 07:40:18 (10 minutes ago)
+- **Where:** `POST /pipeline/sync` endpoint
+- **What:** Backend trying to connect to database host `postgres:5432` but DNS lookup fails
+- **Impact:** 17 errors logged, all pipeline sync operations failing with HTTP 500
+
+**Trace Analysis:**
+The trace shows the backend successfully fetched items from the API, but then failed when 
+attempting to write to the database because it couldn't resolve the hostname `postgres`.
+
+**Likely Causes:**
+1. PostgreSQL container/service is down
+2. Docker network connectivity issue between backend and database
+3. Database hostname misconfiguration
+
+**Recommended Action:** Check if the PostgreSQL container is running and verify Docker network 
+connectivity between services.
+```
+
+### Key observations:
+- The agent automatically searched error logs using `logs_search`
+- Extracted trace IDs from log entries
+- Queried VictoriaTraces for detailed trace information
+- Provided a coherent summary combining log and trace evidence
+- Did NOT ask for clarification — immediately investigated
+
+---
 
 ## Task 4B — Proactive health check
 
-<!-- Screenshot or transcript of the proactive health report that appears in the Flutter chat -->
+### Health check created via cron
+
+The agent created a scheduled health check job that runs every 2 minutes. The job:
+- Checks for backend errors in the last 2 minutes
+- Inspects traces if errors are found
+- Posts a short summary to the chat
+
+### Proactive health report (with PostgreSQL stopped)
+
+```
+## 🐾 System Health Check Report
+
+**Status: ⚠️ NEW ERROR DETECTED**
+
+### Recent Errors (Last 5 Minutes)
+- **0 errors** counted in error summary, but **1 new error** found in logs
+
+### 🚨 New Issue Detected
+| Detail | Value |
+|--------|-------|
+| **Time** | 08:09:58 (just now, ~1 minute ago) |
+| **Error** | `asyncpg.InterfaceError: connection is closed` |
+| **Operation** | `SELECT` query on `item` table |
+| **Trace ID** | `616d1334dbb13b05d0d9afede01e7baf` |
+
+### Error Pattern Summary
+| Error Type | Status |
+|------------|--------|
+| `connection is closed` | 🔴 **NEW** - Just occurred at 08:09 |
+| `DNS resolution failure` | 🟡 Historical - Last at 07:40 (30 min ago) |
+
+### Current System State
+- **Backend Service**: ⚠️ Experiencing intermittent database connectivity issues
+- **Database**: Connection instability detected
+
+### Summary
+A **new database connection error** has occurred. The PostgreSQL connection is being closed 
+unexpectedly during queries. This follows a pattern of database connectivity issues that 
+started around 06:39.
+```
+
+---
 
 ## Task 4C — Bug fix and recovery
 
-<!-- 1. Root cause identified
-     2. Code fix (diff or description)
-     3. Post-fix response to "What went wrong?" showing the real underlying failure
-     4. Healthy follow-up report or transcript after recovery -->
+### 1. Root cause identified
+
+**Planted bug location:** `backend/app/routers/items.py`, lines 14-23
+
+**The bug:** The `get_items` endpoint caught all exceptions and returned HTTP 404 with "Items not found" instead of letting database errors propagate as HTTP 500:
+
+```python
+# BUGGY CODE:
+@router.get("/", response_model=list[ItemRecord])
+async def get_items(session: AsyncSession = Depends(get_session)):
+    try:
+        return await read_items(session)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Items not found",
+        ) from exc
+```
+
+**Why it was wrong:**
+- Database connection errors should return **HTTP 500 Internal Server Error**, not 404
+- The error message "Items not found" was misleading — the items exist, but the database was unreachable
+- This masked the real error from both users and the observability agent
+
+### 2. Code fix
+
+**File changed:** `backend/app/routers/items.py`
+
+**Diff:**
+```diff
+ @router.get("/", response_model=list[ItemRecord])
+ async def get_items(session: AsyncSession = Depends(get_session)):
+     """Get all items."""
+-    try:
+-        return await read_items(session)
+-    except Exception as exc:
+-        raise HTTPException(
+-            status_code=status.HTTP_404_NOT_FOUND,
+-            detail="Items not found",
+-        ) from exc
++    # Let exceptions propagate to the global exception handler
++    # which will return proper 500 errors with details
++    return await read_items(session)
+```
+
+### 3. Post-fix response to "What went wrong?" (after redeploy, with PostgreSQL stopped)
+
+After the fix, the agent correctly reports the real database error:
+
+```
+## 🚨 Issue Found: PostgreSQL Connection Instability
+
+**Root Cause:** Database connections are being closed unexpectedly, causing query failures.
+
+### Most Recent Error (08:20:07 — ~3 minutes ago)
+| Detail | Value |
+|--------|-------|
+| **Endpoint** | `GET /items/` |
+| **HTTP Status** | 500 |
+| **Error** | `asyncpg.exceptions.InterfaceError: connection is closed` |
+| **Trace ID** | `6415d1891c10bf940af02b0b5aceb216` |
+
+### Error Timeline (Last 2 Hours)
+| Time | Error Type | Endpoint |
+|------|------------|----------|
+| 08:20 | `connection is closed` | `GET /items/` |
+| 08:09 | `connection is closed` | `GET /items/` |
+| 07:40 | `DNS resolution failed` | `POST /pipeline/sync` |
+
+### Pattern Analysis
+The errors show **two distinct phases**:
+1. **Earlier (06:37–07:40):** DNS failures — backend couldn't resolve `postgres` hostname
+2. **Recent (08:09–08:20):** Connection drops — DNS works, but connections close mid-query
+
+This suggests the PostgreSQL container came back online but is unstable.
+```
+
+**Key difference:** The agent now sees **HTTP 500** with the real error `asyncpg.exceptions.InterfaceError: connection is closed` instead of the misleading "Items not found" (404).
+
+### 4. Healthy follow-up (after PostgreSQL restart)
+
+After restarting PostgreSQL, the health check reports:
+
+```
+## Backend Health Check Summary (Last 5 Minutes)
+
+✅ **Status: Healthy**
+
+| Metric | Value |
+|--------|-------|
+| Error Count | 0 |
+| Error Log Entries | 0 |
+
+No backend errors detected in the last 5 minutes. The system is running normally.
+```
+
+### Verification commands
+
+```bash
+# Stop PostgreSQL and trigger failure
+docker compose --env-file .env.docker.secret stop postgres
+curl -v http://localhost:42002/items/ -H "Authorization: Bearer eblan"
+# Now returns: HTTP/1.1 500 Internal Server Error
+# With detail: "asyncpg.exceptions.InterfaceError: connection is closed"
+
+# Restart PostgreSQL
+docker compose --env-file .env.docker.secret start postgres
+
+# Verify recovery
+curl -s http://localhost:42002/items/ -H "Authorization: Bearer eblan" | head -c 200
+# Returns: [{"title":"Lab 01 – Products, Architecture & Roles",...
+```
