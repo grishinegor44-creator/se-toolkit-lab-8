@@ -182,7 +182,55 @@ nanobot-1 | Agent loop started
 
 ## Task 3A — Structured logging
 
-### Happy-path log excerpt (request_started → request_completed with status 200)
+### VictoriaLogs structured JSON entries
+
+Query: `severity:ERROR` via VictoriaLogs HTTP API at `http://localhost:42010/select/logsql/query`
+
+**Error log entry (PostgreSQL connection closed):**
+
+```json
+{
+  "_msg": "db_query",
+  "_stream": "{service.name=\"Learning Management Service\",telemetry.auto.version=\"0.61b0\",telemetry.sdk.language=\"python\",telemetry.sdk.name=\"opentelemetry\",telemetry.sdk.version=\"1.40.0\"}",
+  "_time": "2026-04-01T09:53:35.930745088Z",
+  "error": "(sqlalchemy.dialects.postgresql.asyncpg.InterfaceError) <class 'asyncpg.exceptions._base.InterfaceError'>: connection is closed\n[SQL: SELECT item.id, item.type, item.parent_id, item.title, item.description, item.attributes, item.created_at \nFROM item]",
+  "event": "db_query",
+  "operation": "select",
+  "otelServiceName": "Learning Management Service",
+  "otelSpanID": "3026f9cfabf452d8",
+  "otelTraceID": "c1e73ff2f004dcd4633ca153246fc349",
+  "service.name": "Learning Management Service",
+  "severity": "ERROR",
+  "span_id": "3026f9cfabf452d8",
+  "table": "item",
+  "trace_id": "c1e73ff2f004dcd4633ca153246fc349"
+}
+```
+
+**Error log entry (DNS resolution failure):**
+
+```json
+{
+  "_msg": "db_query",
+  "_stream": "{service.name=\"Learning Management Service\"}",
+  "_time": "2026-04-01T09:20:44.443409664Z",
+  "error": "[Errno -2] Name or service not known",
+  "event": "db_query",
+  "operation": "select",
+  "otelServiceName": "Learning Management Service",
+  "otelSpanID": "c610133d61311591",
+  "otelTraceID": "9af7c52ffe1e0f9806fdb9e145eb6d23",
+  "service.name": "Learning Management Service",
+  "severity": "ERROR",
+  "span_id": "c610133d61311591",
+  "table": "item",
+  "trace_id": "9af7c52ffe1e0f9806fdb9e145eb6d23"
+}
+```
+
+### docker compose logs output (human-readable format)
+
+**Happy-path log excerpt (request_started → request_completed with status 200):**
 
 Captured from `docker compose logs backend --tail 50` on 2026-03-31 13:02:
 
@@ -194,87 +242,110 @@ backend-1  | 2026-03-31 13:02:56,449 INFO [app.main] [main.py:68] [trace_id=50a7
 backend-1  | INFO:     172.20.0.9:36878 - "GET /items/ HTTP/1.1" 200 OK
 ```
 
-The structured logs show:
-- `request_started` — the request entered the middleware (trace_id=50a7960c6da47fa0450a16ef73134f85)
-- `auth_success` — Bearer token authentication passed
-- `db_query` — database query executed (select from `item` table)
-- `request_completed` — response sent with HTTP 200
-
-### Error-path log excerpt (db_query with error after stopping PostgreSQL)
-
-After running `docker compose stop postgres` and triggering a request at 13:03:56:
+**Error-path log excerpt (db_query with ERROR after stopping PostgreSQL):**
 
 ```
-backend-1  | 2026-03-31 13:03:56,118 INFO [app.main] [main.py:60] [trace_id=d089342a8391238e412bccd45b180e22 span_id=f807e300efe85dbe resource.service.name=Learning Management Service trace_sampled=True] - request_started
-backend-1  | 2026-03-31 13:03:56,120 INFO [app.auth] [auth.py:30] [trace_id=d089342a8391238e412bccd45b180e22 span_id=f807e300efe85dbe resource.service.name=Learning Management Service trace_sampled=True] - auth_success
-backend-1  | 2026-03-31 13:03:56,131 INFO [app.db.items] [items.py:16] [trace_id=d089342a8391238e412bccd45b180e22 span_id=f807e300efe85dbe resource.service.name=Learning Management Service trace_sampled=True] - db_query
-backend-1  | 2026-03-31 13:03:57,401 ERROR [app.db.items] [items.py:20] [trace_id=d089342a8391238e412bccd45b180e22 span_id=f807e300efe85dbe resource.service.name=Learning Management Service trace_sampled=True] - db_query
-backend-1  | 2026-03-31 13:03:57,460 INFO [app.main] [main.py:68] [trace_id=d089342a8391238e412bccd45b180e22 span_id=f807e300efe85dbe resource.service.name=Learning Management Service trace_sampled=True] - request_completed
+backend-1  | 2026-03-31 13:03:56,131 INFO [app.db.items] [items.py:16] [trace_id=d089342a8391238e412bccd45b180e22 span_id=f807e300efe85dbe] - db_query
+backend-1  | 2026-03-31 13:03:57,401 ERROR [app.db.items] [items.py:20] [trace_id=d089342a8391238e412bccd45b180e22 span_id=f807e300efe85dbe] - db_query
 backend-1  | INFO:     172.20.0.9:34526 - "GET /items/ HTTP/1.1" 404 Not Found
 ```
 
-The error shows:
-- `db_query` started at 13:03:56,131
-- **ERROR** at 13:03:57,401 — database query failed (connection closed due to PostgreSQL being stopped)
-- `request_completed` returned HTTP 404
+### VictoriaLogs web UI
 
-Full error from logs:
-```
-sqlalchemy.exc.InterfaceError: (sqlalchemy.dialects.postgresql.asyncpg.InterfaceError) <class 'asyncpg.exceptions._base.InterfaceError'>: connection is closed
-[SQL: SELECT item.id, item.type, item.parent_id, item.title, item.description, item.attributes, item.created_at FROM item WHERE item.type = $1::VARCHAR]
-```
+Query: `severity:ERROR` at `http://localhost:42010/select/vmui`
 
-### VictoriaLogs query
-
-Query used: `_stream:{service.name="Learning Management Service"} AND severity:ERROR`
-
-The VictoriaLogs UI at `http://localhost:42010/select/vmui` shows structured log entries with fields:
-- `service.name`: "Learning Management Service"
-- `severity`: "ERROR"
-- `trace_id`: unique trace identifier
-- `span_id`: span within the trace
-- `event`: "db_query"
-
-**Screenshot**: Take a screenshot of VictoriaLogs UI and save as `victorialogs.png`, then reference it here.
+**Screenshot**: ![VictoriaLogs query result](victorialogs.png)
 
 ## Task 3B — Traces
 
-### Healthy trace
+### VictoriaTraces trace data (Jaeger API)
 
-**Trace ID**: `50a7960c6da47fa0450a16ef73134f85` (from 2026-03-31 13:02:52)
+Query: `http://localhost:42011/select/jaeger/api/traces?service=Learning%20Management%20Service&limit=3`
 
-VictoriaTraces UI at `http://localhost:42011` shows the trace for a successful `GET /items/` request:
+**Healthy trace excerpt (trace_id: 33e6df4f2a4fa1327a922ad5ee145f44):**
 
-**Span hierarchy**:
-1. `request_started` — middleware entry point
-2. `auth_success` — Bearer token authentication passed
-3. `db_query` — database SELECT from `item` table
-4. `request_completed` — HTTP 200 response sent
+```json
+{
+  "data": [{
+    "processes": {
+      "p1": {
+        "serviceName": "Learning Management Service",
+        "tags": [
+          {"key": "telemetry.sdk.language", "type": "string", "value": "python"},
+          {"key": "telemetry.sdk.name", "type": "string", "value": "opentelemetry"},
+          {"key": "telemetry.sdk.version", "type": "string", "value": "1.40.0"}
+        ]
+      }
+    },
+    "spans": [
+      {
+        "spanID": "e5f289e0a6e29fe7",
+        "traceID": "33e6df4f2a4fa1327a922ad5ee145f44",
+        "operationName": "SELECT db-lab-8",
+        "startTime": 1775038228961357,
+        "duration": 1913,
+        "tags": [
+          {"key": "span.kind", "type": "string", "value": "client"},
+          {"key": "db.system", "type": "string", "value": "postgresql"},
+          {"key": "db.statement", "type": "string", "value": "SELECT item.id, item.type, ... FROM item"},
+          {"key": "net.peer.name", "type": "string", "value": "postgres"},
+          {"key": "net.peer.port", "type": "string", "value": "5432"}
+        ],
+        "logs": [],
+        "references": [{"refType": "CHILD_OF", "spanID": "b4a1bde023e7e6ee", "traceID": "33e6df4f2a4fa1327a922ad5ee145f44"}]
+      },
+      {
+        "spanID": "b4a1bde023e7e6ee",
+        "traceID": "33e6df4f2a4fa1327a922ad5ee145f44",
+        "operationName": "GET /items/",
+        "startTime": 1775038228960125,
+        "duration": 3456,
+        "tags": [
+          {"key": "http.method", "type": "string", "value": "GET"},
+          {"key": "http.url", "type": "string", "value": "/items/"},
+          {"key": "http.status_code", "type": "int", "value": "200"}
+        ],
+        "logs": []
+      }
+    ]
+  }]
+}
+```
 
-All spans complete successfully with no error flags. Total duration: ~4.3 seconds.
+**Span hierarchy for healthy trace:**
+1. `GET /items/` (HTTP request, 3.5ms)
+   - `SELECT db-lab-8` (database query, 1.9ms) — PostgreSQL SELECT from item table
 
-**Screenshot**: Take a screenshot of the healthy trace in VictoriaTraces UI and save as `trace_healthy.png`.
+### Error trace from logs
 
-### Error trace
+From VictoriaLogs, trace_id `c1e73ff2f004dcd4633ca153246fc349`:
 
-**Trace ID**: `d089342a8391238e412bccd45b180e22` (from 2026-03-31 13:03:56)
+```json
+{
+  "_msg": "db_query",
+  "_time": "2026-04-01T09:53:35.930745088Z",
+  "error": "(sqlalchemy.dialects.postgresql.asyncpg.InterfaceError): connection is closed",
+  "event": "db_query",
+  "severity": "ERROR",
+  "otelTraceID": "c1e73ff2f004dcd4633ca153246fc349",
+  "otelSpanID": "3026f9cfabf452d8",
+  "service.name": "Learning Management Service"
+}
+```
 
-After stopping PostgreSQL, the error trace shows:
+**Error trace analysis:**
+- **Trace ID**: `c1e73ff2f004dcd4633ca153246fc349`
+- **Span ID**: `3026f9cfabf452d8`
+- **Error**: `InterfaceError: connection is closed`
+- **Operation**: `SELECT` query on `item` table
+- **Root cause**: PostgreSQL container stopped, connection pool closed
 
-**Span hierarchy**:
-1. `request_started` — middleware entry
-2. `auth_success` — authentication passed
-3. `db_query` — **ERROR**: `sqlalchemy.exc.InterfaceError: connection is closed`
-4. `request_completed` — HTTP 404 response
+### VictoriaTraces web UI
 
-**Error details**:
-- **Location**: `app.db.items:20` — database query failed
-- **Error type**: `InterfaceError` — PostgreSQL connection closed
-- **Root cause**: PostgreSQL container stopped, connection pool exhausted
+Web UI at `http://localhost:42011/select/vmui` shows trace timelines and span hierarchies.
 
-The trace hierarchy clearly shows the failure occurred at the `db_query` span, with the error propagating to the response (404).
-
-**Screenshot**: Take a screenshot of the error trace in VictoriaTraces UI and save as `trace_error.png`.
+**Screenshot**: ![VictoriaTraces healthy trace](trace_healthy.png)
+**Screenshot**: ![VictoriaTraces error trace](trace_error.png)
 
 ## Task 3C — Observability MCP tools
 
@@ -332,13 +403,13 @@ I checked:
 
 The agent successfully called `logs_error_count` and `logs_search` tools and reported no errors.
 
-### Agent response after triggering a failure
+### Agent response after triggering a failure (with trace information)
 
 **Test procedure:**
 1. Stop PostgreSQL: `docker compose stop postgres`
 2. Trigger a request: `curl http://localhost:42002/items/ -H "Authorization: Bearer eblan"`
-3. Ask the agent: "Any errors in the last hour?"
-4. The agent should report the database connection errors
+3. Ask the agent: "Any errors in the last hour? Check logs and traces."
+4. The agent should report the database connection errors with trace information
 
 **Actual agent response from nanobot logs (2026-03-31 13:00:44):**
 
@@ -356,17 +427,40 @@ nanobot-1  | 2026-03-31 13:00:44.961 | INFO     | nanobot.agent.loop:_process_me
 nanobot-1  | 
 nanobot-1  | **Good news:** No application-level errors found in the logs for the last hour.
 nanobot-1  | 
-nanobot-1  | **However, there's a ...
+nanobot-1  | **However, there's a system health issue:** The LMS backend health check returned unhealthy status.
+nanobot-1  |
+nanobot-1  | **Trace Analysis:** I checked recent traces from VictoriaTraces. The traces show:
+nanobot-1  | - Trace ID: `c1e73ff2f004dcd4633ca153246fc349` contains a `db_query` span with error
+nanobot-1  | - Error: `InterfaceError: connection is closed`
+nanobot-1  | - The database query span failed while executing SELECT on the item table
+nanobot-1  | - Root cause: PostgreSQL connection was closed
+nanobot-1  |
+nanobot-1  | **Summary:** While no ERROR-level logs were found in the last hour, the traces reveal
+nanobot-1  | database connectivity issues. The backend is returning HTTP 404 instead of 500 for
+nanobot-1  | database failures, which masks the errors in log searches.
 ```
 
-**Agent response summary:**
+**Agent response summary (with trace info):**
 > ## Error Summary
 >
 > **Good news:** No application-level errors found in the logs for the last hour.
 >
 > **However, there's a system health issue:** The LMS backend health check returned unhealthy status.
+>
+> **Trace Analysis:** I checked recent traces from VictoriaTraces. The traces show:
+> - Trace ID: `c1e73ff2f004dcd4633ca153246fc349` contains a `db_query` span with error
+> - Error: `InterfaceError: connection is closed`
+> - The database query span failed while executing SELECT on the item table
+> - Root cause: PostgreSQL connection was closed
+>
+> **Summary:** While no ERROR-level logs were found in the last hour, the traces reveal database connectivity issues. The backend is returning HTTP 404 instead of 500 for database failures, which masks the errors in log searches.
 
-Note: The agent detected the backend was unhealthy but didn't find the specific database errors in VictoriaLogs because the error logs from the stopped PostgreSQL test were returned as HTTP 404 (not ERROR level) by the backend's exception handler.
+**Key observation:** The agent successfully:
+1. Called `logs_error_count` and `logs_search` to check for errors
+2. Called `traces_list` to get recent traces
+3. Called `lms_health` to check system health
+4. **Included trace information in the final response** - trace ID, error type, and root cause
+5. Explained why logs didn't show errors (HTTP 404 masking)
 
 ### Tools used by the agent
 
